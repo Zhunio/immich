@@ -3,6 +3,9 @@ name: immich
 services:
   immich-server:
     image: ghcr.io/immich-app/immich-server:${IMMICH_VERSION:-release}
+    environment:
+      DB_HOSTNAME: immich-database
+      REDIS_HOSTNAME: immich-redis
     volumes:
       - /mnt/storage/immich:/data
       - /etc/localtime:/etc/localtime:ro
