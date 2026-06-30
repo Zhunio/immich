@@ -1,210 +1,73 @@
-# Immich Homelab
+# 📸 Immich Photo Management
 
-Self-hosted Immich deployment managed with Docker Compose + Coolify.
+Self-hosted photo and video management platform with automatic backups, mobile synchronization, AI-powered search, and facial recognition.
 
-## Architecture
+## ✨ Features
 
-```text
-Host
-  ├── Docker
-  ├── Coolify
-  ├── Cloudflare Tunnel
-  └── Mount Management
+- 📸 Self-hosted photo and video library.
+- 📱 Automatic mobile photo backup.
+- 🤖 AI-powered facial recognition and smart search.
+- 🗺️ Timeline, albums, favorites, and sharing.
+- 🎥 Automatic thumbnail and video transcoding.
+- 🗄️ PostgreSQL database with vector search support.
+- ❤️ Machine learning services for image analysis.
+- 🐳 Run with Docker Compose or Coolify.
 
-Coolify
-  ├── Immich Deployment
-  ├── Environment Variables
-  ├── Logs
-  └── Scheduled Jobs
+## 🚀 Coolify
 
-Storage
-  ├── /mnt/storage
-  └── /mnt/storage-backup
-```
+Deploy this repository as a Docker Compose service.
 
----
+- 🔐 Repository Type: `Private Repository (with GitHub App)`
+- 🐙 GitHub App: `zhunio-coolify`
+- 🌿 Branch: `main`
+- 🐳 Build Pack: `Docker Compose`
+- 🌐 Domain: `photos.example.com`
+- 📂 Data mounts:
+  - `/mnt/storage/immich`
+  - `/var/lib/immich-postgres`
+- 🔑 Environment variables:
+  - `UPLOAD_LOCATION`
+  - `DB_DATA_LOCATION`
 
-# Directory Structure
+For detailed deployment instructions, see [`DEPLOY.md`](DEPLOY.md).
 
-```text
-/opt/
-└── immich/
-    ├── docker-compose.yml
-    ├── .env
-    └── README.md
+## ⚙️ Immich Configuration
 
-/mnt/
-├── storage/
-│   └── immich/
-│       ├── backups/
-│       ├── encoded-video/
-│       ├── library/
-│       ├── profile/
-│       ├── thumbs/
-│       └── upload/
-│
-└── storage-backup/
-    └── mirror of /mnt/storage
-```
+Configure Immich using Coolify environment variables.
 
----
+### Required
 
-# Environment Variables
+- 📂 **UPLOAD_LOCATION** — Root directory for uploaded photos, videos, thumbnails, and generated files.
+- 🗄️ **DB_DATA_LOCATION** — PostgreSQL data directory.
+
+Example:
 
 ```env
 UPLOAD_LOCATION=/mnt/storage/immich
 DB_DATA_LOCATION=/var/lib/immich-postgres
 ```
 
----
+## 💾 Storage Layout
 
-# Deployment
-
-Immich is deployed through Coolify using this repository.
-
-## Coolify Notes
-
-- Docker Compose resource
-- Git-based deployments
-- Bind mounts are required
-- Do NOT use Docker-managed anonymous volumes for uploads or Postgres
-
----
-
-# Backup Strategy
-
-## Media Backup
-
-```bash
-rsync -aHAXv --delete \
-  /mnt/storage/ \
-  /mnt/storage-backup/
-```
-
-## PostgreSQL Backup
-
-```bash
-docker exec -t <postgres-container> pg_dumpall -U postgres \
-  > ~/immich-backup.sql
-```
-
----
-
-# Restore Strategy
-
-## Reuse Existing Database
-
-Use the same bind mounts:
-
-```env
-UPLOAD_LOCATION=/mnt/storage/immich
-DB_DATA_LOCATION=/var/lib/immich-postgres
-```
-
-Then redeploy Immich.
-
-## Restore from SQL Dump
-
-```bash
-cat ~/immich-backup.sql | docker exec -i <postgres-container> psql -U postgres
-```
-
----
-
-# Cloudflare Tunnel
-
-Coolify is exposed through Cloudflare Tunnel.
-
-Example routes:
+Immich stores all uploaded media beneath `UPLOAD_LOCATION`.
 
 ```text
-coolify.example.com → http://localhost:8000
-*.example.com       → http://localhost:80
+UPLOAD_LOCATION/
+├── backups/
+├── encoded-video/
+├── library/
+├── profile/
+├── thumbs/
+└── upload/
 ```
 
-Coolify proxy (Traefik) handles application routing.
+## ♻️ Restore
 
----
+Restore consists of:
 
-# Migration History
+1. 🛑 Stop the application.
+2. ☁️ Restore `/mnt/storage/immich`.
+3. ☁️ Restore the PostgreSQL data directory.
+4. 🚀 Start the application.
 
-## Storage Migration
-
-Old:
-
-```text
-/mnt/immich-media
-/mnt/backup
-/opt/immich-app
-```
-
-New:
-
-```text
-/mnt/storage
-/mnt/storage-backup
-/opt/immich
-```
-
-## Coolify Migration
-
-Migrated from:
-
-- manual Docker Compose deployment
-
-To:
-
-- Git-based Coolify deployment
-
-Existing uploads and PostgreSQL data were preserved using bind mounts.
-
----
-
-# Operational Notes
-
-## Before Deploying
-
-Stop existing Immich stack:
-
-```bash
-docker compose down
-```
-
-## Validate After Deployment
-
-- photos load
-- uploads work
-- mobile sync works
-- existing users/albums exist
-
----
-
-# Useful Commands
-
-## View Containers
-
-```bash
-docker ps
-```
-
-## View Logs
-
-```bash
-docker logs -f <container>
-```
-
-## Docker Cleanup
-
-```bash
-docker system prune
-```
-
----
-
-# Future Improvements
-
-- Move PostgreSQL data to `/mnt/storage/immich-postgres`
-- Add scheduled Coolify backup jobs
-- Add monitoring/alerting
-- Add offsite backups
-- Add automated DB dumps
+See [RESTORE.md](RESTORE.md).
